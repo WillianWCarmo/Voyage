@@ -1,0 +1,24 @@
+# Dependências
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Arquivos temporários
+*.log
+.DS_Store
+Thumbs.db
+
+# Build e cobertura
+coverage/
+
+# Backups do banco de dados
+*.backup
+*.dump

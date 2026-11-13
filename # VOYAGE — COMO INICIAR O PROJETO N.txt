@@ -1,0 +1,78 @@
+# VOYAGE — COMO INICIAR O PROJETO NO VS CODE
+
+Este guia mostra como iniciar o VoyageApp quando você voltar a trabalhar nele neste notebook.
+
+## 1. Antes de começar
+
+1. Abra o VS Code.
+2. Abra as pastas do projeto.
+3. Confira se o PostgreSQL está iniciado no Windows.
+4. Abra três terminais no VS Code.
+5. Selecione Git Bash como terminal.
+
+O projeto está dividido em duas pastas:
+
+- Backend: `VoyageApp/backend`
+- Web e Mobile: `VoyageApp-corrigido`
+
+## 2. Primeiro terminal — Backend (API)
+
+Cole os comandos:
+
+```bash
+cd "/c/Users/willianacer/OneDrive/Área de Trabalho/VoyageApp/backend"
+npm run dev
+```
+
+Deixe esse terminal aberto.
+
+A API utiliza a porta `3333`.
+
+## 3. Segundo terminal — Site (Web)
+
+Cole:
+
+```bash
+cd "/c/Users/willianacer/OneDrive/Área de Trabalho/VoyageApp-corrigido/apps/web"
+python -m http.server 5500
+```
+
+Deixe o terminal aberto.
+
+Abra o site no navegador:
+
+http://localhost:5500/
+
+Se fizer alterações e elas não aparecerem, pressione `Ctrl + F5` no navegador.
+
+## 4. Terceiro terminal — Aplicativo (Mobile)
+
+Cole:
+
+```bash
+cd "/c/Users/willianacer/OneDrive/Área de Trabalho/VoyageApp-corrigido/apps/app/mobile"
+npx expo start --clear
+```
+
+Se for a primeira vez nesse notebook ou se as dependências tiverem mudado, execute antes:
+
+```bash
+npm install
+```
+
+Depois, utilize o QR Code com o aplicativo Expo Go no celular.
+
+## 5. Como encerrar
+
+Para desligar cada servidor, entre no terminal correspondente e pressione:
+
+`Ctrl + C`
+
+## 6. Observações importantes
+
+- Não feche o terminal do backend enquanto estiver utilizando o site ou aplicativo.
+- O PostgreSQL precisa estar iniciado.
+- O arquivo `.env` do backend precisa estar configurado corretamente.
+- Nunca compartilhe o `.env`, pois ele pode conter senhas e chaves.
+- Se aparecer erro de conexão com o banco, confira se o PostgreSQL está iniciado e se o `DATABASE_URL` está correto.
+- Para carregar os dados da API, normalmente é necessário manter o backend ligado.

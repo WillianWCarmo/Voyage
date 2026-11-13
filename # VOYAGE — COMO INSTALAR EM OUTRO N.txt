@@ -1,0 +1,208 @@
+# VOYAGE — COMO INSTALAR EM OUTRO NOTEBOOK
+
+Este guia explica como baixar e configurar o VoyageApp em outro computador.
+
+**IMPORTANTE:** O GitHub armazena os arquivos do projeto, mas não transfere automaticamente os dados do PostgreSQL. Para manter as notícias, regiões e outros cadastros, também será necessário transferir um backup do banco de dados.
+
+## 1. INSTALAR OS PROGRAMAS
+
+No notebook novo, instale:
+
+1. Git for Windows:
+   [https://git-scm.com/downloads/win](https://git-scm.com/downloads/win)
+
+2. Node.js (versão LTS):
+   [https://nodejs.org/](https://nodejs.org/)
+
+3. Python:
+   [https://www.python.org/downloads/windows/](https://www.python.org/downloads/windows/)
+
+4. PostgreSQL:
+   [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
+
+5. VS Code:
+   [https://code.visualstudio.com/](https://code.visualstudio.com/)
+
+Durante a instalação do PostgreSQL, crie uma senha para o usuário `postgres` e guarde-a.
+
+## 2. BAIXAR O PROJETO DO GITHUB
+
+Abra o Git Bash.
+
+Execute:
+
+```bash
+cd ~
+git clone COLE_AQUI_O_LINK_DO_SEU_REPOSITORIO
+```
+
+Substitua o texto pelo endereço real do repositório VoyageApp no GitHub.
+
+Depois, entre na pasta:
+
+```bash
+cd ~/VoyageApp
+```
+
+Abra a pasta no VS Code:
+
+```bash
+code .
+```
+
+## 3. CONFIGURAR O BACKEND
+
+Entre na pasta do backend:
+
+```bash
+cd ~/VoyageApp/backend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Crie o arquivo `.env` a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Abra o arquivo `.env` no VS Code e configure os dados de conexão com o PostgreSQL instalado nesse notebook.
+
+Confira principalmente o `DATABASE_URL`.
+
+**ATENÇÃO:** Nunca envie o arquivo `.env` para o GitHub, pois ele pode conter senhas e chaves privadas.
+
+Se não existir `.env.example`, será necessário criar o `.env` usando como referência a configuração do notebook antigo.
+
+## 4. TRANSFERIR O BANCO DE DADOS
+
+Essa etapa é necessária para recuperar as notícias, regiões e outros dados cadastrados.
+
+### NO NOTEBOOK ANTIGO
+
+1. Abra o pgAdmin.
+2. Localize o banco `voyage_db`.
+3. Clique com o botão direito nele.
+4. Escolha Backup.
+5. Selecione o formato Custom.
+6. Salve o arquivo como:
+
+`voyage_db.backup`
+
+Transfira esse arquivo para o notebook novo usando um pendrive ou outro meio privado.
+
+**Não publique o backup no GitHub.**
+
+### NO NOTEBOOK NOVO
+
+1. Abra o pgAdmin.
+2. Crie um banco vazio chamado `voyage_db`.
+3. Clique com o botão direito no banco.
+4. Escolha Restore.
+5. Selecione o arquivo `voyage_db.backup`.
+6. Escolha o formato Custom ou tar, conforme a opção disponível.
+7. Inicie a restauração.
+
+Aguarde a conclusão.
+
+### ALTERNATIVA PELO TERMINAL
+
+Os executáveis do PostgreSQL normalmente ficam em:
+
+`C:\Program Files\PostgreSQL\VERSAO\bin`
+
+Substitua `VERSAO` pelo número da versão instalada.
+
+Para criar o banco, caso ainda não exista:
+
+```bash
+"/c/Program Files/PostgreSQL/VERSAO/bin/createdb.exe" -U postgres voyage_db
+```
+
+Para restaurar:
+
+```bash
+"/c/Program Files/PostgreSQL/VERSAO/bin/pg_restore.exe" -U postgres -d voyage_db "/c/Users/SEU_USUARIO/CAMINHO/voyage_db.backup"
+```
+
+Substitua os caminhos pelos caminhos reais do computador.
+
+## 5. INSTALAR AS DEPENDÊNCIAS DO MOBILE
+
+Se o projeto tiver a pasta `apps/app/mobile`, entre nela:
+
+```bash
+cd ~/VoyageApp/apps/app/mobile
+```
+
+Execute:
+
+```bash
+npm install
+```
+
+## 6. INICIAR O PROJETO
+
+Abra três terminais Git Bash no VS Code.
+
+### TERMINAL 1 — BACKEND
+
+```bash
+cd ~/VoyageApp/backend
+npm run dev
+```
+
+Deixe o terminal aberto.
+
+### TERMINAL 2 — SITE
+
+Se o projeto tiver a pasta `apps/web`, execute:
+
+```bash
+cd ~/VoyageApp/apps/web
+python -m http.server 5500
+```
+
+Abra no navegador:
+
+[http://localhost:5500/](http://localhost:5500/)
+
+### TERMINAL 3 — MOBILE
+
+Se o projeto tiver a pasta `apps/app/mobile`, execute:
+
+```bash
+cd ~/VoyageApp/apps/app/mobile
+npx expo start --clear
+```
+
+Utilize o QR Code com o Expo Go.
+
+## 7. CHECKLIST FINAL
+
+- [ ] Git instalado.
+- [ ] Node.js instalado.
+- [ ] Python instalado.
+- [ ] PostgreSQL instalado.
+- [ ] VS Code instalado.
+- [ ] Projeto VoyageApp baixado do GitHub.
+- [ ] Dependências do backend instaladas.
+- [ ] Arquivo `.env` configurado.
+- [ ] Banco `voyage_db` restaurado.
+- [ ] Backup transferido do notebook antigo.
+- [ ] Dependências do mobile instaladas, se aplicável.
+- [ ] Backend iniciado sem erros.
+- [ ] Site aberto no navegador, se aplicável.
+- [ ] Aplicativo iniciado pelo Expo, se aplicável.
+
+## 8. LEMBRETES IMPORTANTES
+
+- O arquivo `.env` não deve ser enviado ao GitHub.
+- O arquivo `voyage_db.backup` não deve ser publicado no GitHub.
+- A pasta `node_modules` não precisa ser enviada ao GitHub. Ela é recriada com `npm install`.
+- O backup do PostgreSQL precisa ser transferido separadamente.
+- Se utilizar o aplicativo em um celular físico, o celular e o notebook precisam estar na mesma rede Wi-Fi. A configuração da API no aplicativo deve apontar para o IP local do notebook, e não para `localhost`.

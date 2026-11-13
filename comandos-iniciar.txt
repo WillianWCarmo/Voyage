@@ -1,0 +1,68 @@
+VOYAGE — INICIALIZAÇÃO LOCAL (WINDOWS 11 / POWERSHELL)
+
+instalar o PostgreSQL 18
+Senha postgres: VoyageAPI26
+
+1. Abra o SQL Shell (psql)
+No menu Iniciar do Windows, procure por SQL Shell (psql) e abra.
+2. Conecte ao banco Voyage
+Responda às perguntas:
+Campo	Valor
+Server	localhost
+Database	voyage
+Port	5432
+Username	postgres
+Password	Sua senha do PostgreSQL
+
+PRÉ-REQUISITOS
+- Node.js 20 ou superior
+- PostgreSQL 18 instalado e iniciado
+- VS Code + Live Server para o Web
+- Expo Go ou emulador Android para o Mobile
+
+1) BANCO DE DADOS
+No pgAdmin: Databases > Create > Database > nome: voyage.
+Ou, no terminal PostgreSQL: createdb -U postgres voyage
+
+2) API (PowerShell na raiz do projeto)
+cd .\backend
+Copy-Item .env.example .env
+node -p "require('crypto').randomBytes(48).toString('hex')"
+notepad .env
+
+No backend/.env:
+- Troque SUA_SENHA_LOCAL pela senha local do PostgreSQL.
+- Troque JWT_SECRET pelo valor aleatório gerado acima.
+- Não compartilhe nem envie o arquivo .env.
+
+Ainda dentro de backend:
+npm install
+npm run db:setup
+npm run dev
+
+Teste: http://localhost:3333/api/health
+Mantenha o terminal da API aberto.
+
+3) WEB
+Abra a raiz do projeto no VS Code, clique com o botão direito em
+apps/web/index.html e selecione Open with Live Server.
+
+4) MOBILE (novo PowerShell na raiz do projeto)
+cd .\apps\app\mobile
+Copy-Item .env.example .env
+npm install
+npx expo start -c
+
+Emulador Android: o endereço padrão 10.0.2.2:3333 funciona para acessar o PC.
+Celular físico: no .env do Mobile, defina
+EXPO_PUBLIC_API_URL=http://IPV4_DO_SEU_PC:3333/api
+O celular e o PC devem estar na mesma rede Wi-Fi. Libere a porta 3333 no
+Firewall do Windows para redes privadas, se necessário.
+
+IMPORTANTE
+- A senha PostgreSQL e JWT_SECRET ficam somente em backend/.env.
+- Não existe senha fixa no projeto.
+- Não coloque JWT_SECRET no .env do Mobile.
+- Não é necessário Docker.
+- O painel administrativo permanece desativado.
+- Recargas são somente demonstrações, sem cobrança real.
