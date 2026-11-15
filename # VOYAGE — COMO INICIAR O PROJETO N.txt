@@ -20,7 +20,7 @@ O projeto está dividido em duas pastas:
 Cole os comandos:
 
 ```bash
-cd "/c/Users/willianacer/OneDrive/Área de Trabalho/VoyageApp/backend"
+cd "/c/Users/willianacer/OneDrive/Área de Trabalho/Voyage/backend"
 npm run dev
 ```
 
@@ -33,7 +33,7 @@ A API utiliza a porta `3333`.
 Cole:
 
 ```bash
-cd "/c/Users/willianacer/OneDrive/Área de Trabalho/VoyageApp-corrigido/apps/web"
+cd "/c/Users/muril@DESKTOP-P26LK30/OneDrive/Área de Trabalho/Voyage/apps/web"
 python -m http.server 5500
 ```
 

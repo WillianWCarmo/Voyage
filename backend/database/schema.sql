@@ -120,6 +120,13 @@ CREATE TABLE IF NOT EXISTS regions (
   description TEXT NOT NULL DEFAULT '',
   image TEXT
 );
+CREATE TABLE IF NOT EXISTS admins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(254) NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 CREATE INDEX IF NOT EXISTS idx_transactions_user_ts ON transactions(user_id,ts DESC);
 CREATE INDEX IF NOT EXISTS idx_notices_user_ts ON notices(user_id,ts DESC);
