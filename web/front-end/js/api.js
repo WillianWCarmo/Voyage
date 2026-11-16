@@ -96,8 +96,8 @@ function extrairTextoWeb(html) {
 }
 
 // Cliente HTTP compartilhado do Web. O navegador nunca acessa o PostgreSQL diretamente.
-const VOYAGE_API_BASE = (window.VOYAGE_API_URL || `http://${window.location.hostname || 'localhost'}:3333/api`).replace(/\/+$/, '');
-
+const VOYAGE_API_BASE = (window.VOYAGE_API_URL || `http://${window.location.hostname || 'localhost'}:13022/api`).replace(/\/+$/, '');
+console.log( VOYAGE_API_BASE)
 async function requisicaoVoyage(path, options = {}) {
     let response;
     try {

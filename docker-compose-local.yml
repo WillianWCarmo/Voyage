@@ -1,0 +1,43 @@
+services:
+  # back em nodejs
+  back:
+    build: ./back
+    container_name: voyage_back
+    #restart: always
+    restart: unless-stopped
+
+    environment:
+      - DATABASE_URL=postgresql://teste:teste@0.0.0.0:5433000/voyage
+      - DB_SSL=false
+      - PORT=3000
+      - HOST=0.0.0.0
+      - JWT_SECRET=adasefasd13313adas5a6asd6a&-@momoadsmodsamvaosmoamvosdamvoasmavosam
+      - JWT_EXPIRES_IN=7d
+      - CORS_ORIGIN=*
+      
+
+    ports:
+      - "13022:3000"  
+    networks:
+      - fatectqnet
+
+  # Servidor Web + API/Front nodejs / banco mysql
+  web:
+    build: 
+      context: ./web
+      args:  
+        - VITE_API_URL=http://localhost:13012
+
+    container_name: voyage_web
+    #restart: always
+    restart: unless-stopped  
+
+    ports:
+      - "15022:80"  
+
+    networks:
+      - fatectqnet
+
+networks:
+  fatectqnet:
+    external: true

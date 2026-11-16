@@ -22,3 +22,5 @@ coverage/
 # Backups do banco de dados
 *.backup
 *.dump
+
+docker-compose.yml
