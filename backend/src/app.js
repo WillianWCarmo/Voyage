@@ -237,7 +237,236 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: process.env.CORS_ORIGIN === '*' ? true : (process.env.CORS_ORIGIN || '').split(',').map(s=>s.trim()).filter(Boolean), allowedHeaders:['Content-Type','Authorization'], methods:['GET','POST','PUT','PATCH','DELETE','OPTIONS'] }));
 app.use(express.json({ limit: '1mb' }));
 app.use((req, res, next) => { req.body = req.body || {}; next(); });
-app.use('/api/admin', (req,res) => res.status(403).json({ error:'ADMIN_DISABLED', message:'O painel administrativo está desativado nesta versão.' }));
+// ===== Autenticação de administradores =====
+app.post('/api/admin/register', async (req, res, next) => {
+  try {
+    const name = requiredString(req.body.name, 'Nome', 120);
+    const email = requiredString(req.body.email, 'E-mail', 254).toLowerCase();
+    const password = typeof req.body.password === 'string' ? req.body.password : '';
+    const codigo = typeof req.body.codigo === 'string' ? req.body.codigo.trim() : '';
+
+    if (codigo !== 'VOYAGE-ADM-2026') {
+      return res.status(403).json({ error: 'INVALID_CODE', message: 'Código de acesso ADM inválido.' });
+    }
+    if (!validEmail(email)) fail(400, 'INVALID_EMAIL', 'Informe um endereço de e-mail válido.');
+    if (password.length < 6 || password.length > 200) fail(400, 'WEAK_PASSWORD', 'A senha deve ter entre 6 e 200 caracteres.');
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const created = await query(
+      'INSERT INTO admins(name, email, password_hash) VALUES($1, $2, $3) RETURNING id, name, email',
+      [name, email, passwordHash]
+    );
+    const admin = created.rows[0];
+    const token = jwt.sign(
+      { sub: admin.id, role: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d', issuer: 'voyage-local-api', audience: 'voyage-admin' }
+    );
+    res.status(201).json({ token, admin: { id: admin.id, name: admin.name, email: admin.email } });
+  } catch (e) {
+    if (e.code === '23505') {
+      return res.status(409).json({ error: 'USER_ALREADY_EXISTS', message: 'Este e-mail já está cadastrado como administrador.' });
+    }
+    next(e);
+  }
+});
+
+app.post('/api/admin/login', async (req, res, next) => {
+  try {
+    const email = requiredString(req.body.email, 'E-mail', 254).toLowerCase();
+    const password = typeof req.body.password === 'string' ? req.body.password : '';
+    if (!password) fail(401, 'INVALID_CREDENTIALS', 'E-mail ou senha incorretos.');
+
+    const found = await query('SELECT id, name, email, password_hash FROM admins WHERE email = $1', [email]);
+    if (!found.rowCount || !(await bcrypt.compare(password, found.rows[0].password_hash))) {
+      fail(401, 'INVALID_CREDENTIALS', 'E-mail ou senha incorretos.');
+    }
+    const admin = found.rows[0];
+    const token = jwt.sign(
+      { sub: admin.id, role: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d', issuer: 'voyage-local-api', audience: 'voyage-admin' }
+    );
+    res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email } });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Middleware: só admin autenticado
+function authAdmin(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Entre na área administrativa para continuar.' });
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET, { issuer: 'voyage-local-api', audience: 'voyage-admin' });
+    if (payload.role !== 'admin') return res.status(403).json({ error: 'FORBIDDEN', message: 'Acesso restrito a administradores.' });
+    req.adminId = payload.sub;
+    return next();
+  } catch {
+    return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Sessão expirada. Entre novamente.' });
+  }
+}
+
+function slugify(text) {
+  return String(text || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60) || ('item-' + Date.now());
+}
+
+// ===== NOTÍCIAS =====
+app.get('/api/admin/news', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('SELECT id, title, author, summary, content, image, published_at FROM news ORDER BY published_at DESC');
+    res.json(r.rows);
+  } catch (e) { next(e); }
+});
+
+app.post('/api/admin/news', authAdmin, async (req, res, next) => {
+  try {
+    const title = requiredString(req.body.title, 'Título', 240);
+    const author = (typeof req.body.author === 'string' && req.body.author.trim()) ? req.body.author.trim().slice(0, 160) : 'Equipe Voyage';
+    const summary = typeof req.body.summary === 'string' ? req.body.summary : '';
+    const content = typeof req.body.content === 'string' ? req.body.content : '';
+    const image = typeof req.body.image === 'string' ? req.body.image.trim() || null : null;
+    let id = typeof req.body.id === 'string' && req.body.id.trim() ? req.body.id.trim().slice(0, 80) : slugify(title);
+    const r = await query(
+      `INSERT INTO news(id, title, author, summary, content, image)
+       VALUES($1,$2,$3,$4,$5,$6)
+       ON CONFLICT(id) DO UPDATE SET title=EXCLUDED.title, author=EXCLUDED.author, summary=EXCLUDED.summary, content=EXCLUDED.content, image=EXCLUDED.image
+       RETURNING id, title, author, summary, content, image, published_at`,
+      [id, title, author, summary, content, image]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.put('/api/admin/news/:id', authAdmin, async (req, res, next) => {
+  try {
+    const title = requiredString(req.body.title, 'Título', 240);
+    const author = (typeof req.body.author === 'string' && req.body.author.trim()) ? req.body.author.trim().slice(0, 160) : 'Equipe Voyage';
+    const summary = typeof req.body.summary === 'string' ? req.body.summary : '';
+    const content = typeof req.body.content === 'string' ? req.body.content : '';
+    const image = typeof req.body.image === 'string' ? req.body.image.trim() || null : null;
+    const r = await query(
+      `UPDATE news SET title=$2, author=$3, summary=$4, content=$5, image=$6
+       WHERE id=$1 RETURNING id, title, author, summary, content, image, published_at`,
+      [req.params.id, title, author, summary, content, image]
+    );
+    if (!r.rowCount) fail(404, 'NEWS_NOT_FOUND', 'Notícia não encontrada.');
+    res.json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.delete('/api/admin/news/:id', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('DELETE FROM news WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!r.rowCount) fail(404, 'NEWS_NOT_FOUND', 'Notícia não encontrada.');
+    res.json({ message: 'Notícia removida.', id: r.rows[0].id });
+  } catch (e) { next(e); }
+});
+
+// ===== PARCEIROS =====
+app.get('/api/admin/partners', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('SELECT id, name, description, logo, url FROM partners ORDER BY name');
+    res.json(r.rows);
+  } catch (e) { next(e); }
+});
+
+app.post('/api/admin/partners', authAdmin, async (req, res, next) => {
+  try {
+    const name = requiredString(req.body.name, 'Nome', 180);
+    const description = typeof req.body.description === 'string' ? req.body.description : '';
+    const logo = typeof req.body.logo === 'string' ? req.body.logo.trim() || null : null;
+    const url = typeof req.body.url === 'string' ? req.body.url.trim() || null : null;
+    let id = typeof req.body.id === 'string' && req.body.id.trim() ? req.body.id.trim().slice(0, 80) : slugify(name);
+    const r = await query(
+      `INSERT INTO partners(id, name, description, logo, url)
+       VALUES($1,$2,$3,$4,$5)
+       ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, logo=EXCLUDED.logo, url=EXCLUDED.url
+       RETURNING id, name, description, logo, url`,
+      [id, name, description, logo, url]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.put('/api/admin/partners/:id', authAdmin, async (req, res, next) => {
+  try {
+    const name = requiredString(req.body.name, 'Nome', 180);
+    const description = typeof req.body.description === 'string' ? req.body.description : '';
+    const logo = typeof req.body.logo === 'string' ? req.body.logo.trim() || null : null;
+    const url = typeof req.body.url === 'string' ? req.body.url.trim() || null : null;
+    const r = await query(
+      `UPDATE partners SET name=$2, description=$3, logo=$4, url=$5
+       WHERE id=$1 RETURNING id, name, description, logo, url`,
+      [req.params.id, name, description, logo, url]
+    );
+    if (!r.rowCount) fail(404, 'PARTNER_NOT_FOUND', 'Parceiro não encontrado.');
+    res.json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.delete('/api/admin/partners/:id', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('DELETE FROM partners WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!r.rowCount) fail(404, 'PARTNER_NOT_FOUND', 'Parceiro não encontrado.');
+    res.json({ message: 'Parceiro removido.', id: r.rows[0].id });
+  } catch (e) { next(e); }
+});
+
+// ===== REGIÕES =====
+app.get('/api/admin/regions', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('SELECT id, name, description, image FROM regions ORDER BY name');
+    res.json(r.rows);
+  } catch (e) { next(e); }
+});
+
+app.post('/api/admin/regions', authAdmin, async (req, res, next) => {
+  try {
+    const name = requiredString(req.body.name, 'Nome', 180);
+    const description = typeof req.body.description === 'string' ? req.body.description : '';
+    const image = typeof req.body.image === 'string' ? req.body.image.trim() || null : null;
+    let id = typeof req.body.id === 'string' && req.body.id.trim() ? req.body.id.trim().slice(0, 80) : slugify(name);
+    const r = await query(
+      `INSERT INTO regions(id, name, description, image)
+       VALUES($1,$2,$3,$4)
+       ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, image=EXCLUDED.image
+       RETURNING id, name, description, image`,
+      [id, name, description, image]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.put('/api/admin/regions/:id', authAdmin, async (req, res, next) => {
+  try {
+    const name = requiredString(req.body.name, 'Nome', 180);
+    const description = typeof req.body.description === 'string' ? req.body.description : '';
+    const image = typeof req.body.image === 'string' ? req.body.image.trim() || null : null;
+    const r = await query(
+      `UPDATE regions SET name=$2, description=$3, image=$4
+       WHERE id=$1 RETURNING id, name, description, image`,
+      [req.params.id, name, description, image]
+    );
+    if (!r.rowCount) fail(404, 'REGION_NOT_FOUND', 'Região não encontrada.');
+    res.json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+app.delete('/api/admin/regions/:id', authAdmin, async (req, res, next) => {
+  try {
+    const r = await query('DELETE FROM regions WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!r.rowCount) fail(404, 'REGION_NOT_FOUND', 'Região não encontrada.');
+    res.json({ message: 'Região removida.', id: r.rows[0].id });
+  } catch (e) { next(e); }
+});
+
 app.use('/api', router);
 app.use((req,res) => res.status(404).json({ error:'NOT_FOUND', message:'Rota não encontrada.' }));
 app.use((err,req,res,next) => {
