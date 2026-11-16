@@ -274,3 +274,13 @@ body {
         gap: 0.8rem;
     }
 }
+
+.cidade-foto {
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;          /* quadrado com cantos levemente arredondados */
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    background: #e2e8f0;
+}

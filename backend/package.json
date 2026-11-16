@@ -4,12 +4,13 @@
   "private": true,
   "description": "API local compartilhada do Voyage Web e Mobile",
   "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "db:setup": "node src/setup-db.js",
-    "check": "node --check src/server.js && node --check src/app.js && node --check src/db.js"
-  },
+"scripts": {
+  "dev": "node src/server.js",
+  "build": "echo Build não necessário para o backend",
+  "start": "node src/server.js",
+  "db:setup": "node src/setup-db.js"
+},
+
   "engines": { "node": ">=20" },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo | Voyage</title>
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <style>
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display:block; font-size:.85rem; color:var(--admin-muted); margin-bottom:6px; }
+    .form-group input, .form-group textarea {
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--admin-border);
+      background:#0f172a; color:var(--admin-text); font-family:inherit; font-size:.95rem;
+    }
+    .form-group textarea { min-height:90px; resize:vertical; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+    .toast {
+      position:fixed; bottom:24px; right:24px; padding:12px 18px; border-radius:8px;
+      background:#1e293b; color:#e2e8f0; border:1px solid #334155; opacity:0;
+      pointer-events:none; transition:opacity .2s; z-index:2000; max-width:360px;
+    }
+    .toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="../img/voyage_logo.svg" alt="Voyage">
+        <span>Voyage ADM</span>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="#" class="active" data-section="dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="#" data-section="noticias"><i class="bi bi-newspaper"></i> Notícias</a></li>
+        <li><a href="#" data-section="parceiros"><i class="bi bi-building"></i> Parceiros</a></li>
+        <li><a href="#" data-section="regioes"><i class="bi bi-geo-alt"></i> Regiões</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div style="padding:0 12px 12px; color:var(--admin-muted); font-size:.85rem;" id="adminName">—</div>
+        <button class="btn-logout" id="btnLogout"><i class="bi bi-box-arrow-right"></i> Sair</button>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+      <!-- DASHBOARD -->
+      <section id="section-dashboard" class="section active">
+        <div class="admin-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Gerencie o conteúdo público do Voyage</p>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Notícias</h3><div class="number" id="statNoticias">0</div></div>
+          <div class="stat-card"><h3>Parceiros</h3><div class="number" id="statParceiros">0</div></div>
+          <div class="stat-card"><h3>Regiões</h3><div class="number" id="statRegioes">0</div></div>
+        </div>
+      </section>
+
+      <!-- NOTÍCIAS -->
+      <section id="section-noticias" class="section">
+        <div class="section-header">
+          <h2 style="margin:0;">Notícias</h2>
+          <button class="btn-primary" id="btnAddNews"><i class="bi bi-plus-lg"></i> Nova notícia</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Título</th><th>Autor</th><th>Publicado</th><th>Ações</th></tr></thead>
+            <tbody id="tbodyNoticias"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PARCEIROS -->
+      <section id="section-parceiros" class="section">
+        <div class="section-header">
+          <h2 style="margin:0;">Parceiros</h2>
+          <button class="btn-primary" id="btnAddPartner"><i class="bi bi-plus-lg"></i> Novo parceiro</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Nome</th><th>Descrição</th><th>Site</th><th>Ações</th></tr></thead>
+            <tbody id="tbodyParceiros"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REGIÕES -->
+      <section id="section-regioes" class="section">
+        <div class="section-header">
+          <h2 style="margin:0;">Regiões</h2>
+          <button class="btn-primary" id="btnAddRegion"><i class="bi bi-plus-lg"></i> Nova região</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Nome</th><th>Descrição</th><th>Ações</th></tr></thead>
+            <tbody id="tbodyRegioes"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalBox">
+      <h2 id="modalTitle" style="margin:0 0 16px;">—</h2>
+      <form id="modalForm"></form>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="modalCancel">Cancelar</button>
+        <button type="button" class="btn-primary" id="modalSave">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script src="../js/admin.js"></script>
+
+
+</body>
+</html>

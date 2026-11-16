@@ -244,68 +244,6 @@
     <script src="../js/idioma.js"></script>
     <script src="../js/api.js"></script>
 
-    <script>
-    async function carregarRegioes() {
-        const lista = document.getElementById('cidadesList');
-        if (!lista) return;
-
-        try {
-            const regioes = await buscarRegioes();
-            if (!regioes.length) {
-                const empty = document.createElement('p');
-                empty.className = 'regioes-empty-state';
-                empty.textContent = 'Nenhuma região cadastrada.';
-                lista.replaceChildren(empty);
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            regioes.forEach((regiao) => {
-                const item = document.createElement('div');
-                item.className = 'cidade-item';
-                item.dataset.name = String(regiao.nome || '').toLocaleLowerCase('pt-BR');
-
-                const info = document.createElement('div');
-                info.className = 'cidade-info';
-                const icon = document.createElement('div');
-                icon.className = 'cidade-icon';
-                const iconElement = document.createElement('i');
-                iconElement.className = 'bi bi-geo-alt-fill';
-                icon.appendChild(iconElement);
-
-                const details = document.createElement('div');
-                const title = document.createElement('h3');
-                title.textContent = regiao.nome || 'Região';
-                const status = document.createElement('p');
-                status.className = 'cidade-status';
-                const dot = document.createElement('span');
-                dot.className = 'status-dot';
-                status.append(dot, document.createTextNode(' Em operação'));
-                details.append(title, status);
-                info.append(icon, details);
-                item.appendChild(info);
-                fragment.appendChild(item);
-            });
-            lista.replaceChildren(fragment);
-
-            // Reaplica o filtro após carregar itens dinâmicos.
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                const term = searchInput.value.toLocaleLowerCase('pt-BR');
-                lista.querySelectorAll('.cidade-item').forEach((item) => {
-                    item.classList.toggle('hidden', !item.dataset.name.includes(term));
-                });
-            }
-        } catch (error) {
-            console.error('Não foi possível carregar as regiões:', error);
-            const message = document.createElement('p');
-            message.textContent = 'Não foi possível carregar as regiões. Tente novamente mais tarde.';
-            lista.replaceChildren(message);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', carregarRegioes);
-</script>
 
     <!-- Código de integração do VLibras -->
     <div vw class="enabled">
